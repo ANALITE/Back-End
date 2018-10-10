@@ -18,7 +18,7 @@ public class AppConfiguration {
     public MongoDbFactory mongoDbFactory() throws Exception {
 
         // Set credentials
-        MongoCredential credential = MongoCredential.createCredential("analite_admin", "analitedb", "analitedb".toCharArray());
+        MongoCredential credential = MongoCredential.createCredential("analite_admin", "analitedb", "analite123".toCharArray());
         ServerAddress serverAddress = new ServerAddress("ds129233.mlab.com", 29233);
 
         // Mongo Client
