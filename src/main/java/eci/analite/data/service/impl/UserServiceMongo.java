@@ -1,11 +1,13 @@
 package eci.analite.data.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import eci.analite.data.UserRepository;
 import eci.analite.data.model.User;
 import eci.analite.data.service.UserService;
 
+@Service
 public class UserServiceMongo implements UserService {
 
 	@Autowired
