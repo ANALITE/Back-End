@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -27,7 +28,7 @@ public class UserController {
 	private UserService userService;
 
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	@CrossOrigin (origins = "http://localhost:3000")
+	@CrossOrigin(origins = "http://localhost:3000")
 	public Token login(@RequestBody User login) throws ServletException, UserServiceException {
 		String jwtToken;
 
@@ -52,12 +53,23 @@ public class UserController {
 		return new Token(jwtToken);
 	}
 
+	@RequestMapping(value = "/{user_id}", method = RequestMethod.PUT)
+	@CrossOrigin(origins = "http://localhost:3000")
+	public ResponseEntity<String> putUser(@PathVariable(value = "user_id") String username, @RequestBody User user) {
+		try {
+			userService.updateUser(username, user);
+			return new ResponseEntity<>("Username updated", HttpStatus.OK);
+		} catch (UserServiceException e) {
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+		}
+	}
+
 	@RequestMapping(method = RequestMethod.POST)
-	@CrossOrigin (origins = "http://localhost:3000")
-	public ResponseEntity<?> postUser(@RequestBody User user) {
+	@CrossOrigin(origins = "http://localhost:3000")
+	public ResponseEntity<String> postUser(@RequestBody User user) {
 		try {
 			userService.addUSer(user);
-			return new ResponseEntity<>(HttpStatus.OK);
+			return new ResponseEntity<>("User created", HttpStatus.OK);
 		} catch (UserServiceException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
 		}

@@ -6,5 +6,5 @@ import eci.analite.data.service.impl.UserServiceException;
 public interface UserService {
 	User getUserByUsername(String username) throws UserServiceException;
 	User addUSer(User user) throws UserServiceException;
-	User updateUser(User user) throws UserServiceException;
+	User updateUser(String username, User user) throws UserServiceException;
 }

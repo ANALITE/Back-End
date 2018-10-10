@@ -31,9 +31,14 @@ public class UserServiceMongo implements UserService {
 	}
 
 	@Override
-	public User updateUser(User user) {
-		// TODO Auto-generated method stub
-		return null;
-
+	public User updateUser(String username, User user) throws UserServiceException {
+		if (!userRepository.existsByUsername(username)) {
+			throw new UserServiceException("User" + username + " doesn't exist");
+		}
+		if(userRepository.existsByUsername(user.getUsername())) {
+			throw new UserServiceException(user, "User already exists. Please select another username");
+		}
+		userRepository.deleteByUsername(username);
+		return userRepository.save(user);
 	}
 }
