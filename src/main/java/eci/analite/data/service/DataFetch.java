@@ -10,5 +10,5 @@ package eci.analite.data.service;
  * @author user
  */
 public interface DataFetch {
-    
+    public void search_query(String query);
 }
