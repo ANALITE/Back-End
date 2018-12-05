@@ -69,21 +69,21 @@ public class TwitterDataExtractor {
     private void get_tweets(String search_query) {
         try {
             Query query = new Query(search_query);
-            query.setCount(100);
-            query.setSince("2016-12-07");
+            query.setCount(10);
+            query.setSince("2018-05-07");
             query.setUntil("2018-12-07");
             QueryResult result = TWITTER.search(query);
-            while (result.getTweets().size() > 0) {
-                Long minId = Long.MAX_VALUE;
-                for (Status s : result.getTweets()) {
-                    get_result_data(s);
-                    if (s.getId() < minId) {
-                        minId = s.getId();
-                    }
+//            while (result.getTweets().size() > 0) {
+            Long minId = Long.MAX_VALUE;
+            for (Status s : result.getTweets()) {
+                get_result_data(s);
+                if (s.getId() < minId) {
+                    minId = s.getId();
                 }
-                query.setMaxId(minId - 1);
-                result = TWITTER.search(query);
             }
+//                query.setMaxId(minId - 1);
+//                result = TWITTER.search(query);
+//            }
         } catch (TwitterException ex) {
             Logger.getLogger(TwitterDataExtractor.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -111,8 +111,8 @@ public class TwitterDataExtractor {
 
     private void each_sentiment(Object result) {
         JSONObject object = (JSONObject) result;
-        float score = Float.parseFloat(object.getJSONObject("score").toString());
-        int index = Integer.parseInt(object.getJSONObject("id").toString());
+        float score = object.getFloat("score");
+        int index = object.getInt("id");
         lines.get(index).setSentiment(score);
     }
 

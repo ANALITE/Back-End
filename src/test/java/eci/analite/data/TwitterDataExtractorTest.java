@@ -6,6 +6,8 @@
 package eci.analite.data;
 
 import eci.analite.data.service.twitterimpl.TwitterDataExtractor;
+import java.io.File;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +25,7 @@ public class TwitterDataExtractorTest {
 
     @Test
     public void test_file_gen() {
-//        twde.search_data("");
+        File response = twde.search_data("educacion");
+        Assert.assertNotNull(response);
     }
 }
