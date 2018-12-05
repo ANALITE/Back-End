@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  *
@@ -33,7 +35,7 @@ public class TweetsController {
     TwitterDataExtractor twde = new TwitterDataExtractor();
 
     @CrossOrigin("*")
-    @RequestMapping("/{filename}")
+    @RequestMapping("/data/{filename}")
     public ResponseEntity<InputStreamResource> getQueryFile(@PathVariable String filename) {
         GridFSFile file = gridFsTemplate.findOne(new Query().addCriteria(Criteria.where("filename").is(filename)));
         if (file != null) {
@@ -47,6 +49,17 @@ public class TweetsController {
             }
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @CrossOrigin("*")
+    @PostMapping("/data")
+    public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+        try {
+            gridFsTemplate.store(file.getInputStream(), file.getOriginalFilename(), file.getContentType());
+            return String.format("/%s", file.getOriginalFilename());
+        } catch (IOException e) {
+            return HttpStatus.INTERNAL_SERVER_ERROR.toString();
         }
     }
 }
