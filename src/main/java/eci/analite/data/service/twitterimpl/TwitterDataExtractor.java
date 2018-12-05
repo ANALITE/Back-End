@@ -49,10 +49,10 @@ public class TwitterDataExtractor {
         lines = new ArrayList<>();
         get_tweets(search_query);
         sentiment_run();
-        write_file(search_query);
+        get_sentiment_file(search_query);
     }
 
-    public static File write_file(String file_name) {
+    public File get_sentiment_file(String file_name) {
         File file = new File(String.format("data/%s.csv", file_name));
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(file));
@@ -103,13 +103,13 @@ public class TwitterDataExtractor {
         }
     }
 
-    private static void json_map_sentiment(String response) {
+    private void json_map_sentiment(String response) {
         JSONObject json = new JSONObject(response);
         JSONArray sentiments = json.getJSONArray("documents");
-        sentiments.forEach(TwitterDataExtractor::each_sentiment);
+        sentiments.forEach(result -> each_sentiment(result));
     }
 
-    private static void each_sentiment(Object result) {
+    private void each_sentiment(Object result) {
         JSONObject object = (JSONObject) result;
         float score = Float.parseFloat(object.getJSONObject("score").toString());
         int index = Integer.parseInt(object.getJSONObject("id").toString());
