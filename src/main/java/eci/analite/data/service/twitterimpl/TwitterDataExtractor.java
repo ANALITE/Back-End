@@ -5,8 +5,13 @@
  */
 package eci.analite.data.service.twitterimpl;
 
+import com.google.gson.Gson;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -15,6 +20,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.HttpsURLConnection;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import twitter4j.Query;
 import twitter4j.QueryResult;
@@ -37,7 +43,30 @@ public class TwitterDataExtractor {
     private static final String PATH_SENTIMENT = "/text/analytics/v2.0/sentiment";
     private static final String PATH_KEYPHRASES = "/text/analytics/v2.0/keyPhrases";
 
-    public static void search_data(String search_query) {
+    private static ArrayList<Line> lines;
+
+    public void search_data(String search_query) {
+        lines = new ArrayList<>();
+        get_tweets(search_query);
+        sentiment_run();
+        write_file(search_query);
+    }
+
+    public static File write_file(String file_name) {
+        File file = new File(String.format("data/%s.csv", file_name));
+        try {
+            BufferedWriter out = new BufferedWriter(new FileWriter(file));
+            for (Line line : lines) {
+                out.append(line.toString());
+            }
+            out.close();
+        } catch (IOException ex) {
+            Logger.getLogger(TwitterDataExtractor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return file;
+    }
+
+    private void get_tweets(String search_query) {
         try {
             Query query = new Query(search_query);
             query.setCount(100);
@@ -60,23 +89,47 @@ public class TwitterDataExtractor {
         }
     }
 
-    private static void get_result_data(Status status) {
+    private void get_result_data(Status status) {
         if (!status.isRetweet()) {
-            String user = status.getUser().getName();
-            String user_img = status.getUser().get400x400ProfileImageURL();
+            Line line = new Line();
+            line.setUser(status.getUser().getName());
+            line.setUser_img(status.getUser().get400x400ProfileImageURL());
             int low_bound = status.getSource().indexOf(">") + 1;
             int up_bound = status.getSource().indexOf("<", 3);
-            String source = status.getSource().substring(low_bound, up_bound);
-            String text = status.getText();
-            Date date = status.getCreatedAt();
-
-            String line = String.format("%s,%s,%s,%s,%s", user, user_img, source, text, date.toString());
+            line.setSource(status.getSource().substring(low_bound, up_bound));
+            line.setText(status.getText());
+            line.setDate(status.getCreatedAt());
+            lines.add(line);
         }
     }
 
-    private static void get_sentiment(Documents documents, StringBuilder response) throws Exception {
-        JSONObject object = new JSONObject(documents);
-        String text = object.toString();
+    private static void json_map_sentiment(String response) {
+        JSONObject json = new JSONObject(response);
+        JSONArray sentiments = json.getJSONArray("documents");
+        sentiments.forEach(TwitterDataExtractor::each_sentiment);
+    }
+
+    private static void each_sentiment(Object result) {
+        JSONObject object = (JSONObject) result;
+        float score = Float.parseFloat(object.getJSONObject("score").toString());
+        int index = Integer.parseInt(object.getJSONObject("id").toString());
+        lines.get(index).setSentiment(score);
+    }
+
+    private void sentiment_run() {
+        try {
+            Documents documents = new Documents();
+            for (int i = 0; i < lines.size(); ++i) {
+                documents.add("" + i, "es", lines.get(i).getText());
+            }
+            json_map_sentiment(get_sentiment(documents));
+        } catch (Exception ex) {
+            Logger.getLogger(TwitterDataExtractor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private String get_sentiment(Documents documents) throws Exception {
+        String text = new Gson().toJson(documents);
         byte[] encoded_text = text.getBytes("UTF-8");
 
         URL url = new URL(HOST + PATH_SENTIMENT);
@@ -94,14 +147,15 @@ public class TwitterDataExtractor {
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(connection.getInputStream()));
         String line;
+        StringBuilder response = new StringBuilder();
         while ((line = in.readLine()) != null) {
             response.append(line);
         }
+        return response.toString();
     }
-    
-    private static void get_keyphrases(Documents documents, StringBuilder response) throws Exception {
-        JSONObject object = new JSONObject(documents);
-        String text = object.toString();
+
+    private String get_keyphrases(Documents documents) throws Exception {
+        String text = new Gson().toJson(documents);
         byte[] encoded_text = text.getBytes("UTF-8");
 
         URL url = new URL(HOST + PATH_KEYPHRASES);
@@ -119,9 +173,11 @@ public class TwitterDataExtractor {
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(connection.getInputStream()));
         String line;
+        StringBuilder response = new StringBuilder();
         while ((line = in.readLine()) != null) {
             response.append(line);
         }
+        return response.toString();
     }
 
     private class Document {
@@ -145,6 +201,69 @@ public class TwitterDataExtractor {
 
         public void add(String id, String language, String text) {
             this.documents.add(new Document(id, language, text));
+        }
+    }
+
+    private class Line {
+
+        private String user_img;
+        private String user;
+        private String source;
+        private String text;
+        private Date date;
+        private float sentiment = -1f;
+
+        public float getSentiment() {
+            return sentiment;
+        }
+
+        public void setSentiment(float sentiment) {
+            this.sentiment = sentiment;
+        }
+
+        public String getUser_img() {
+            return user_img;
+        }
+
+        public void setUser_img(String user_img) {
+            this.user_img = user_img;
+        }
+
+        public String getUser() {
+            return user;
+        }
+
+        public void setUser(String user) {
+            this.user = user;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public void setSource(String source) {
+            this.source = source;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public Date getDate() {
+            return date;
+        }
+
+        public void setDate(Date date) {
+            this.date = date;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s,%s,%s,%s,%s,%.4f%n", user, user_img, source, text, date.toString(), sentiment);
         }
     }
 }
