@@ -45,14 +45,14 @@ public class TwitterDataExtractor {
 
     private static ArrayList<Line> lines;
 
-    public void search_data(String search_query) {
+    public File search_data(String search_query) {
         lines = new ArrayList<>();
         get_tweets(search_query);
         sentiment_run();
-        get_sentiment_file(search_query);
+        return get_sentiment_file(search_query);
     }
 
-    public File get_sentiment_file(String file_name) {
+    private File get_sentiment_file(String file_name) {
         File file = new File(String.format("data/%s.csv", file_name));
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(file));

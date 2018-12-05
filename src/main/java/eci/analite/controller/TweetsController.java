@@ -7,7 +7,13 @@ package eci.analite.controller;
 
 import com.mongodb.client.gridfs.model.GridFSFile;
 import eci.analite.data.service.twitterimpl.TwitterDataExtractor;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -35,8 +41,20 @@ public class TweetsController {
     TwitterDataExtractor twde = new TwitterDataExtractor();
 
     @CrossOrigin("*")
+    @RequestMapping("/query/{filename}")
+    public ResponseEntity<InputStreamResource> getFileByQuery(@PathVariable String filename) {
+        try {
+            File query = twde.search_data(filename);
+            return ResponseEntity.ok().contentType(new MediaType("text", "csv", Charset.forName("utf-8"))).body(new InputStreamResource(new FileInputStream(query)));
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(TweetsController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @CrossOrigin("*")
     @RequestMapping("/data/{filename}")
-    public ResponseEntity<InputStreamResource> getQueryFile(@PathVariable String filename) {
+    public ResponseEntity<InputStreamResource> getQueryFileMongo(@PathVariable String filename) {
         GridFSFile file = gridFsTemplate.findOne(new Query().addCriteria(Criteria.where("filename").is(filename)));
         if (file != null) {
             try {
