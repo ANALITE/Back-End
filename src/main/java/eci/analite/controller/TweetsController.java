@@ -49,6 +49,9 @@ public class TweetsController {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(TweetsController.class.getName()).log(Level.SEVERE, null, ex);
             return new ResponseEntity(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (IOException ex) {
+            Logger.getLogger(TweetsController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

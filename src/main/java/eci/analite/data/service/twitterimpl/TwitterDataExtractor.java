@@ -45,32 +45,35 @@ public class TwitterDataExtractor {
 
     private static ArrayList<Line> lines;
 
-    public File search_data(String search_query) {
-        lines = new ArrayList<>();
-        get_tweets(search_query);
-        sentiment_run();
-        return get_sentiment_file(search_query);
+    public File search_data(String search_query) throws IOException {
+        File file = new File(String.format("data/%s.csv", search_query));
+        if (!file.exists()) {
+            lines = new ArrayList<>();
+            get_tweets(search_query);
+            sentiment_run();
+            get_sentiment_file(file);
+            file.createNewFile();
+        }
+        return file;
     }
 
-    private File get_sentiment_file(String file_name) {
-        File file = new File(String.format("data/%s.csv", file_name));
+    private void get_sentiment_file(File file) {
         try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(file));
-            for (Line line : lines) {
-                out.append(line.toString());
+            try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
+                for (Line line : lines) {
+                    out.append(line.toString());
+                }
             }
-            out.close();
         } catch (IOException ex) {
             Logger.getLogger(TwitterDataExtractor.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return file;
     }
 
     private void get_tweets(String search_query) {
         try {
             Query query = new Query(search_query);
             query.setCount(10);
-            query.setSince("2018-05-07");
+            query.setSince("2018-01-07");
             query.setUntil("2018-12-07");
             QueryResult result = TWITTER.search(query);
 //            while (result.getTweets().size() > 0) {
